@@ -14,6 +14,10 @@ const Navbar = () => {
             .catch(error => console.log(error));
     }
 
+
+
+    
+
     const navOptions = <>
         <li><Link to='/'>Home</Link></li>
         <li><Link to='/menu'>Our Menu</Link></li>
