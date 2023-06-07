@@ -4,15 +4,15 @@ import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import useAuth from "../../../hooks/useAuth";
 
 
-const CheckOutForm = ({ price }) => {
+const CheckOutForm = ({ cart, price }) => {
 
     const stripe = useStripe();
     const element = useElements();
-    const {user} = useAuth();
+    const { user } = useAuth();
     const [axiosSecure] = useAxiosSecure()
     const [cardError, setCartError] = useState('');
     const [clientSecret, setClientSecret] = useState('');
-    const[processing, setProcessing] = useState(false);
+    const [processing, setProcessing] = useState(false);
     const [transactionId, setTransactionId] = useState('');
 
 
@@ -22,7 +22,7 @@ const CheckOutForm = ({ price }) => {
                 console.log(res.data.clientSecret)
                 setClientSecret(res.data.clientSecret);
             })
-    }, [])
+    }, [price, axiosSecure])
 
 
     const handleSubmit = async (event) => {
@@ -40,7 +40,7 @@ const CheckOutForm = ({ price }) => {
         // console.log('card', card)
 
         // use your card element with other stripe.js apis 
-        const { error, paymentMethod } = await stripe.createPaymentMethod({
+        const { error } = await stripe.createPaymentMethod({
             type: 'card',
             card
         })
@@ -56,7 +56,7 @@ const CheckOutForm = ({ price }) => {
 
         setProcessing(true)
 
-        const { paymentIntent, error:confirmError } = await stripe.confirmCardPayment(
+        const { paymentIntent, error: confirmError } = await stripe.confirmCardPayment(
             clientSecret,
             {
                 payment_method: {
@@ -69,7 +69,7 @@ const CheckOutForm = ({ price }) => {
             },
         );
 
-        if(confirmError){
+        if (confirmError) {
             console.log(confirmError);
         }
 
@@ -77,10 +77,27 @@ const CheckOutForm = ({ price }) => {
 
         setProcessing(false)
 
-        if(paymentIntent.status === "succeeded"){
+        if (paymentIntent.status === "succeeded") {
             setTransactionId(paymentIntent.id);
-            // const transactionId = paymentIntent.id;
-            // todo next step 
+
+            // save payment information to the server
+            const payment = {
+                email: user?.email,
+                transactionId: paymentIntent.id,
+                price,
+                quantity: cart.length,
+                items: cart.map(item => item._id),
+                itemsName: cart.map(item => item.name)
+            }
+
+            axiosSecure.post('/payments', payment)
+            .then(res => {
+                console.log(res.data);
+                if(res.data.insertedId){
+                    // display confirm 
+                    
+                }
+            })
         }
     }
 
