@@ -1,12 +1,26 @@
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import useAxiosSecure from "../../../hooks/useAxiosSecure";
+import useAuth from "../../../hooks/useAuth";
 
 
 const CheckOutForm = ({ price }) => {
 
     const stripe = useStripe();
     const element = useElements();
+    const {user} = useAuth();
+    const [axiosSecure] = useAxiosSecure()
     const [cardError, setCartError] = useState('');
+    const [clientSecret, setClientSecret] = useState('')
+
+
+    useEffect(() => {
+        axiosSecure.post('/create-payment-intent', { price })
+            .then(res => {
+                console.log(res.data.clientSecret)
+                setClientSecret(res.data.clientSecret);
+            })
+    }, [price, axiosSecure])
 
 
     const handleSubmit = async (event) => {
@@ -37,6 +51,25 @@ const CheckOutForm = ({ price }) => {
             setCartError('');
             console.log('payment method', paymentMethod)
         }
+
+        const { paymentIntent, error:confirmError } = await stripe.confirmCardPayment(
+            clientSecret,
+            {
+                payment_method: {
+                    card: card,
+                    billing_details: {
+                        email: user?.email || 'unknown',
+                        name: user?.displayName || 'anonymous'
+                    },
+                },
+            },
+        );
+
+        if(confirmError){
+            console.log(confirmError);
+        }
+
+        console.log(paymentIntent)
     }
 
     return (
@@ -58,12 +91,12 @@ const CheckOutForm = ({ price }) => {
                         },
                     }}
                 />
-                <button className="btn btn-primary btn-sm mt-4" type="submit" disabled={!stripe}>
+                <button className="btn btn-primary btn-sm mt-4" type="submit" disabled={!stripe || !clientSecret}>
                     Pay
                 </button>
             </form>
             {
-                cardError &&  <p className="text-red-600 ml-8">{cardError}</p>
+                cardError && <p className="text-red-600 ml-8">{cardError}</p>
             }
         </>
     );
