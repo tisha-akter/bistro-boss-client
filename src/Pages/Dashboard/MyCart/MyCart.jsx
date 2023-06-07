@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import useCart from "../../../hooks/useCart";
 import { FaTrashAlt } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { Link } from "react-router-dom";
 
 
 const MyCart = () => {
@@ -20,25 +21,25 @@ const MyCart = () => {
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
             confirmButtonText: 'Yes, delete it!'
-          }).then((result) => {
+        }).then((result) => {
             if (result.isConfirmed) {
-              fetch(`http://localhost:5000/carts/${item._id}`, {
-                method: 'Delete'
+                fetch(`http://localhost:5000/carts/${item._id}`, {
+                    method: 'Delete'
 
-              })
-              .then(res => res.json())
-              .then(data => {
-                if (data.deletedCount>0){
-                    refetch();
-                    Swal.fire(
-                        'Deleted!',
-                        'Your file has been deleted.',
-                        'success'
-                      )
-                }
-              })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.deletedCount > 0) {
+                            refetch();
+                            Swal.fire(
+                                'Deleted!',
+                                'Your file has been deleted.',
+                                'success'
+                            )
+                        }
+                    })
             }
-          })
+        })
     }
 
 
@@ -55,7 +56,9 @@ const MyCart = () => {
                     Total Total Price: ${total}
                 </h3>
 
-                <button className="btn btn-warning btn-sm">Pay</button>
+                <Link to="/dashboard/payment">
+                    <button className="btn btn-warning btn-sm">Pay</button>
+                </Link>
             </div>
 
             <div className="overflow-x-auto w-full">
@@ -92,7 +95,7 @@ const MyCart = () => {
                                 </td>
                                 <td className="text-end">${item.price}</td>
                                 <td>
-                                    <button onClick={ () => handleDelete(item)} className="btn btn-ghost bg-red-600 text-white"><FaTrashAlt></FaTrashAlt></button>
+                                    <button onClick={() => handleDelete(item)} className="btn btn-ghost bg-red-600 text-white"><FaTrashAlt></FaTrashAlt></button>
                                 </td>
                             </tr>)
                         }
