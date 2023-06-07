@@ -11,7 +11,9 @@ const CheckOutForm = ({ price }) => {
     const {user} = useAuth();
     const [axiosSecure] = useAxiosSecure()
     const [cardError, setCartError] = useState('');
-    const [clientSecret, setClientSecret] = useState('')
+    const [clientSecret, setClientSecret] = useState('');
+    const[processing, setProcessing] = useState(false);
+    const [transactionId, setTransactionId] = useState('');
 
 
     useEffect(() => {
@@ -20,7 +22,7 @@ const CheckOutForm = ({ price }) => {
                 console.log(res.data.clientSecret)
                 setClientSecret(res.data.clientSecret);
             })
-    }, [price, axiosSecure])
+    }, [])
 
 
     const handleSubmit = async (event) => {
@@ -49,8 +51,10 @@ const CheckOutForm = ({ price }) => {
         }
         else {
             setCartError('');
-            console.log('payment method', paymentMethod)
+            // console.log('payment method', paymentMethod)
         }
+
+        setProcessing(true)
 
         const { paymentIntent, error:confirmError } = await stripe.confirmCardPayment(
             clientSecret,
@@ -69,7 +73,15 @@ const CheckOutForm = ({ price }) => {
             console.log(confirmError);
         }
 
-        console.log(paymentIntent)
+        console.log('payment intent', paymentIntent);
+
+        setProcessing(false)
+
+        if(paymentIntent.status === "succeeded"){
+            setTransactionId(paymentIntent.id);
+            // const transactionId = paymentIntent.id;
+            // todo next step 
+        }
     }
 
     return (
@@ -91,12 +103,15 @@ const CheckOutForm = ({ price }) => {
                         },
                     }}
                 />
-                <button className="btn btn-primary btn-sm mt-4" type="submit" disabled={!stripe || !clientSecret}>
+                <button className="btn btn-primary btn-sm mt-4" type="submit" disabled={!stripe || !clientSecret || processing}>
                     Pay
                 </button>
             </form>
             {
                 cardError && <p className="text-red-600 ml-8">{cardError}</p>
+            }
+            {
+                transactionId && <p className="text-green-600">Transaction complete with transactionId: {transactionId}</p>
             }
         </>
     );
